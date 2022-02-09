@@ -23,41 +23,65 @@ const inputDuration = document.querySelector(".form__input--duration");
 const inputCadence = document.querySelector(".form__input--cadence");
 const inputElevation = document.querySelector(".form__input--elevation");
 
-// DISPLAYING A LEAFLET MAP
+let map, mapEvent;
+console.log(map, mapEvent);
+// GET CURRENT LOCATION AND DISPLAY LEAFLET MAP
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
-    //1. success callback
+    //1. SUCCESS CALLBACK
+    // Get current location coordinates
     function (position) {
       const { latitude } = position.coords;
       const { longitude } = position.coords;
       const coords = [latitude, longitude];
-      const map = L.map("map").setView(coords, 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
 
-      map.on("click", function (mapEvent) {
-        const { lat, lng } = mapEvent.latlng;
-        L.marker([lat, lng])
-          .addTo(map)
-          .bindPopup(
-            L.popup({
-              maxWidth: 250,
-              minWidth: 100,
-              autoClose: false,
-              closeOnClick: false,
-              className: "running-popup",
-            })
-          )
-          .setPopupContent("Workout")
-          .openPopup();
+      // Set the map view with coords
+      map = L.map("map").setView(coords, 13); // Copy map to map global variable
+
+      // Add a base map layer
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+      ).addTo(map);
+
+      // Display form on map click
+      map.on("click", function (mapE) {
+        mapEvent = mapE; // Copy mapE to a global mapEvent variable
+        form.classList.remove("hidden");
+        inputDistance.focus();
       });
     },
 
-    //2. fail callback
+    //2. FAIL CALLBACK
     function () {
       alert("Could not get your position");
     }
   );
 }
+
+// HANDLE FORM SUBMISSION
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  // Display marker
+  const { lat, lng } = mapEvent.latlng;
+  L.marker([lat, lng])
+    .addTo(map)
+    .bindPopup(
+      L.popup({
+        maxWidth: 250,
+        minWidth: 100,
+        autoClose: false,
+        closeOnClick: false,
+        className: "running-popup",
+      })
+    )
+    .setPopupContent("Workout")
+    .openPopup();
+
+  // Clear form input after submission
+  inputDistance.value =
+    inputDuration.value =
+    inputCadence.value =
+    inputElevation.value =
+      "";
+});
