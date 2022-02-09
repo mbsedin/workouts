@@ -24,7 +24,7 @@ const inputCadence = document.querySelector(".form__input--cadence");
 const inputElevation = document.querySelector(".form__input--elevation");
 
 let map, mapEvent;
-console.log(map, mapEvent);
+
 // GET CURRENT LOCATION AND DISPLAY LEAFLET MAP
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
@@ -84,4 +84,10 @@ form.addEventListener("submit", function (e) {
     inputCadence.value =
     inputElevation.value =
       "";
+});
+
+// Implimenting workout type input
+inputType.addEventListener("change", function () {
+  inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
+  inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
 });
