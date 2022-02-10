@@ -23,25 +23,22 @@ const inputDuration = document.querySelector(".form__input--duration");
 const inputCadence = document.querySelector(".form__input--cadence");
 const inputElevation = document.querySelector(".form__input--elevation");
 
-let map, mapEvent;
 
+///////////////
 class App {
-  //Private instance properties: present on all created object
   _map;
   _mapEvent;
 
   constructor() {
-    this._getPosition(); // Will be automatically called on an instance
+    this._getPosition();
+    form.addEventListener("submit", this._newWorkout.bind(this));
+    inputType.addEventListener("change", this._toggleElevationField);
   }
 
-  // GET CURRENT LOCATION AND DISPLAY LEAFLET MAP
   _getPosition() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        //1. SUCCESS CALLBACK
-        this._loadMap.bind(this), // when invoked as a callback it's "this"=="undefined"
-
-        //2. FAIL CALLBACK
+        this._loadMap.bind(this),
         function () {
           alert("Could not get your position");
         }
@@ -50,66 +47,53 @@ class App {
   }
 
   _loadMap(position) {
-    // Get current location coordinates
     const { latitude } = position.coords;
     const { longitude } = position.coords;
     const coords = [latitude, longitude];
+    this._map = L.map("map").setView(coords, 13);
 
-    // Set the map view with coords
-    this._map = L.map("map").setView(coords, 13); // Copy map to map global variable
-
-    // Add a base map layer
     L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png").addTo(
       this._map
     );
 
-    // Display form on map click
-    this._map.on("click", function (mapE) {
-      this._mapEvent = mapE; // Copy mapE to a global mapEvent variable
-      form.classList.remove("hidden");
-      inputDistance.focus();
-    });
+    this._map.on("click", this._showForm.bind(this));
   }
 
-  _showForm() {}
+  _showForm(mapE) {
+    this._mapEvent = mapE;
+    form.classList.remove("hidden");
+    inputDistance.focus();
+  }
 
-  _toggleElevationField() {}
+  _toggleElevationField() {
+    inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
+    inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
+  }
 
-  _newWorkout() {}
+  _newWorkout(e) {
+    e.preventDefault();
+    inputDistance.value =
+      inputDuration.value =
+      inputCadence.value =
+      inputElevation.value =
+        "";
+
+    const { lat, lng } = this._mapEvent.latlng;
+    L.marker([lat, lng])
+      .addTo(this._map)
+      .bindPopup(
+        L.popup({
+          maxWidth: 250,
+          minWidth: 100,
+          autoClose: false,
+          closeOnClick: false,
+          className: "running-popup",
+        })
+      )
+      .setPopupContent("Workout")
+      .openPopup();
+  }
 }
 
+/////////////////////
 const app = new App();
-
-// HANDLE FORM SUBMISSION
-form.addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  // Display marker
-  const { lat, lng } = mapEvent.latlng;
-  L.marker([lat, lng])
-    .addTo(map)
-    .bindPopup(
-      L.popup({
-        maxWidth: 250,
-        minWidth: 100,
-        autoClose: false,
-        closeOnClick: false,
-        className: "running-popup",
-      })
-    )
-    .setPopupContent("Workout")
-    .openPopup();
-
-  // Clear form input after submission
-  inputDistance.value =
-    inputDuration.value =
-    inputCadence.value =
-    inputElevation.value =
-      "";
-});
-
-// Implimenting workout type input
-inputType.addEventListener("change", function () {
-  inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
-  inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
-});
