@@ -25,38 +25,60 @@ const inputElevation = document.querySelector(".form__input--elevation");
 
 let map, mapEvent;
 
-// GET CURRENT LOCATION AND DISPLAY LEAFLET MAP
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    //1. SUCCESS CALLBACK
-    // Get current location coordinates
-    function (position) {
-      const { latitude } = position.coords;
-      const { longitude } = position.coords;
-      const coords = [latitude, longitude];
+class App {
+  //Private instance properties: present on all created object
+  _map;
+  _mapEvent;
 
-      // Set the map view with coords
-      map = L.map("map").setView(coords, 13); // Copy map to map global variable
+  constructor() {
+    this._getPosition(); // Will be automatically called on an instance
+  }
 
-      // Add a base map layer
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-      ).addTo(map);
+  // GET CURRENT LOCATION AND DISPLAY LEAFLET MAP
+  _getPosition() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        //1. SUCCESS CALLBACK
+        this._loadMap.bind(this), // when invoked as a callback it's "this"=="undefined"
 
-      // Display form on map click
-      map.on("click", function (mapE) {
-        mapEvent = mapE; // Copy mapE to a global mapEvent variable
-        form.classList.remove("hidden");
-        inputDistance.focus();
-      });
-    },
-
-    //2. FAIL CALLBACK
-    function () {
-      alert("Could not get your position");
+        //2. FAIL CALLBACK
+        function () {
+          alert("Could not get your position");
+        }
+      );
     }
-  );
+  }
+
+  _loadMap(position) {
+    // Get current location coordinates
+    const { latitude } = position.coords;
+    const { longitude } = position.coords;
+    const coords = [latitude, longitude];
+
+    // Set the map view with coords
+    this._map = L.map("map").setView(coords, 13); // Copy map to map global variable
+
+    // Add a base map layer
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png").addTo(
+      this._map
+    );
+
+    // Display form on map click
+    this._map.on("click", function (mapE) {
+      this._mapEvent = mapE; // Copy mapE to a global mapEvent variable
+      form.classList.remove("hidden");
+      inputDistance.focus();
+    });
+  }
+
+  _showForm() {}
+
+  _toggleElevationField() {}
+
+  _newWorkout() {}
 }
+
+const app = new App();
 
 // HANDLE FORM SUBMISSION
 form.addEventListener("submit", function (e) {
